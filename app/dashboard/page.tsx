@@ -7,15 +7,19 @@ import AIInsightBanner from "@/components/dashboard/AIInsightBanner";
 import MarketMoverCard from "@/components/dashboard/MarketMoverCard";
 import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
 import { kpiData } from "@/lib/mockData";
+import { useApp } from "@/lib/AppContext";
 
 export default function DashboardPage() {
+  const { user } = useApp();
+  const firstName = user?.name.trim().split(/\s+/)[0];
+
   return (
     <DashboardShell>
       <div className="space-y-5">
         {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-slate-100">
-            Good morning, Gokul 👋
+            Good morning{firstName ? `, ${firstName}` : ""} 👋
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Here&apos;s your portfolio snapshot for today — 27 Jan 2025

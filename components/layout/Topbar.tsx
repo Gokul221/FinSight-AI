@@ -2,8 +2,17 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useApp } from "@/lib/AppContext";
-import { Bell, Search, Sun, Moon, Zap } from "lucide-react";
+import { Bell, Search, Sun, Moon, Zap, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { getInitials } from "@/lib/utils";
 
 const breadcrumbMap: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -17,9 +26,10 @@ const breadcrumbMap: Record<string, string> = {
 export default function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { sidebarCollapsed, darkMode, setDarkMode } = useApp();
+  const { sidebarCollapsed, darkMode, setDarkMode, user, logout } = useApp();
 
   const pageTitle = breadcrumbMap[pathname] ?? "FinSight AI";
+  const initials = user ? getInitials(user.name) : "";
 
   return (
     <header
@@ -84,10 +94,41 @@ export default function Topbar() {
           <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-rose-500 rounded-full" />
         </Button>
 
-        {/* Avatar */}
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 cursor-pointer">
-          GK
-        </div>
+        {/* Avatar menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+            title={user?.name}
+            aria-label="Open account menu"
+            id="topbar-avatar-menu"
+          >
+            {initials}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {user && (
+              <>
+                <DropdownMenuLabel>
+                  <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <User />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <Settings />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => logout()}>
+              <LogOut />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
