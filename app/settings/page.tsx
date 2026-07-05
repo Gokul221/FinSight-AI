@@ -48,6 +48,8 @@ function FieldRow({
 }
 
 function ProfileTab() {
+  const { user, userLoading } = useApp();
+
   return (
     <SectionCard
       title="Profile Information"
@@ -56,13 +58,13 @@ function ProfileTab() {
       <div className="space-y-0">
         <FieldRow label="Full Name">
           <Input
-            defaultValue="Gokul K"
+            value={userLoading ? "" : user?.name ?? ""}
             className="bg-white/[0.04] border-white/[0.08] text-slate-200 text-sm h-9 focus:border-indigo-500/50"
           />
         </FieldRow>
         <FieldRow label="Email">
           <Input
-            defaultValue="gokul@example.com"
+            value={userLoading ? "" : user?.email ?? ""}
             type="email"
             className="bg-white/[0.04] border-white/[0.08] text-slate-200 text-sm h-9 focus:border-indigo-500/50"
           />

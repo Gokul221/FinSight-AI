@@ -15,7 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, id: "dashboard" },
@@ -28,7 +28,9 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { sidebarCollapsed, setSidebarCollapsed } = useApp();
+  const { sidebarCollapsed, setSidebarCollapsed, user, logout } = useApp();
+  const displayName = user?.name ?? "...";
+  const initials = user ? getInitials(user.name) : "";
 
   return (
     <aside
@@ -133,23 +135,27 @@ export default function Sidebar() {
         )}
       >
         {sidebarCollapsed ? (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-            GK
-          </div>
+          <button
+            onClick={() => logout()}
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold"
+            aria-label="Logout"
+            title="Logout"
+          >
+            {initials}
+          </button>
         ) : (
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              GK
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-200 truncate">Gokul K</p>
+              <p className="text-sm font-medium text-slate-200 truncate">{displayName}</p>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-slate-500">Pro Plan</span>
-                <span className="w-1 h-1 rounded-full bg-emerald-400" />
-                <span className="text-[10px] text-emerald-400">Active</span>
+                <span className="text-[10px] text-slate-500 truncate">{user?.email}</span>
               </div>
             </div>
             <button
+              onClick={() => logout()}
               className="flex-shrink-0 p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 transition-colors"
               aria-label="Logout"
             >

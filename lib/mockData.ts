@@ -260,7 +260,7 @@ export const allocationData: AllocationData[] = [
   { name: "IT", value: 35, color: "#6366F1" },
   { name: "Banking", value: 25, color: "#10B981" },
   { name: "Energy", value: 15, color: "#F59E0B" },
-  { name: "FMCG", value: 12, color: "#8B5CF6" },
+  { name: "FMCG", value: 12, color: "#5c8df6ff" },
   { name: "Pharma", value: 8, color: "#F43F5E" },
   { name: "Others", value: 5, color: "#64748B" },
 ];
