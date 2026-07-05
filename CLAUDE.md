@@ -12,7 +12,12 @@ npm run build   # production build
 npm run start   # run production build
 ```
 
-There is no lint or test script configured in `package.json`, and no test files exist in the repo.
+```bash
+npm test         # run the vitest suite once
+npm run test:watch  # run vitest in watch mode
+```
+
+There is no lint script configured in `package.json`. Tests use Vitest (`vitest.config.ts`) and live next to the file they cover (`lib/auth.test.ts`, `app/api/auth/login/route.test.ts`, `proxy.test.ts`, etc.). Route-handler and `proxy.ts` tests mock `next/headers`/`lib/db/connect`/`models/User` with `vi.mock`; a few tests (`lib/db/connect.test.ts`, the "integration" block in `models/User.test.ts`) spin up a real in-memory MongoDB via `mongodb-memory-server` instead of mocking, to cover the connection-caching logic and the bcrypt `pre("save")` hook. `lib/AppContext.test.tsx` runs under a jsdom environment (`// @vitest-environment jsdom` docblock) since the rest of the suite defaults to `environment: "node"`.
 
 ## Architecture
 
