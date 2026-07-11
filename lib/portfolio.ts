@@ -5,6 +5,28 @@ export type RawHolding = Pick<
   "id" | "name" | "ticker" | "quantity" | "avgBuyPrice" | "currentPrice" | "sector"
 >;
 
+interface SerializableHoldingDocument {
+  _id: { toString(): string };
+  name: string;
+  ticker: string;
+  quantity: number;
+  avgBuyPrice: number;
+  currentPrice: number;
+  sector: string;
+}
+
+export function serializeHolding(holding: SerializableHoldingDocument): RawHolding {
+  return {
+    id: holding._id.toString(),
+    name: holding.name,
+    ticker: holding.ticker,
+    quantity: holding.quantity,
+    avgBuyPrice: holding.avgBuyPrice,
+    currentPrice: holding.currentPrice,
+    sector: holding.sector,
+  };
+}
+
 // currentValue/pnl/pnlPercent/weight aren't stored — they're derived from the
 // raw fields returned by the API, same formulas the mock data was hand-computed with.
 export function withComputedFields(raw: RawHolding[]): Holding[] {

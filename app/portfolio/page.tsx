@@ -6,13 +6,16 @@ import HoldingsTable from "@/components/portfolio/HoldingsTable";
 import AllocationDonut from "@/components/portfolio/AllocationDonut";
 import PerformanceChart from "@/components/portfolio/PerformanceChart";
 import AddHoldingDialog from "@/components/portfolio/AddHoldingDialog";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { withComputedFields, type RawHolding } from "@/lib/portfolio";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 
 export default function PortfolioPage() {
   const [rawHoldings, setRawHoldings] = useState<RawHolding[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/portfolio")
@@ -20,6 +23,21 @@ export default function PortfolioPage() {
       .then((data) => setRawHoldings(data.holdings))
       .catch(() => setError("Couldn't load your portfolio. Please refresh the page."));
   }, []);
+
+  const refreshPrices = async () => {
+    setRefreshing(true);
+    setRefreshError(null);
+    try {
+      const res = await fetch("/api/portfolio/refresh-prices", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to refresh prices");
+      const data = await res.json();
+      setRawHoldings(data.holdings);
+    } catch {
+      setRefreshError("Couldn't refresh live prices. Please try again.");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const loading = rawHoldings === null && !error;
   const holdings = withComputedFields(rawHoldings ?? []);
@@ -74,6 +92,18 @@ export default function PortfolioPage() {
                 </div>
               </div>
             )}
+            {!loading && !error && holdings.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshPrices}
+                disabled={refreshing}
+                className="border-white/[0.1] text-slate-300 hover:bg-white/5 text-xs"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                {refreshing ? "Refreshing..." : "Refresh Prices"}
+              </Button>
+            )}
             <AddHoldingDialog
               onAdded={(holding) => setRawHoldings((prev) => [...(prev ?? []), holding])}
             />
@@ -82,6 +112,10 @@ export default function PortfolioPage() {
 
         {error && (
           <div className="glass-card p-4 text-sm text-rose-400">{error}</div>
+        )}
+
+        {refreshError && (
+          <div className="glass-card p-4 text-sm text-rose-400">{refreshError}</div>
         )}
 
         {loading && (

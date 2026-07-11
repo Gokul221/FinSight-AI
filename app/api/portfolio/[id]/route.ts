@@ -1,33 +1,14 @@
-import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db/connect";
 import { Holding, type HoldingDocument } from "@/models/Holding";
-import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/auth";
 import { isPositiveNumber } from "@/lib/validation";
-
-function serializeHolding(holding: HoldingDocument) {
-  return {
-    id: holding._id.toString(),
-    name: holding.name,
-    ticker: holding.ticker,
-    quantity: holding.quantity,
-    avgBuyPrice: holding.avgBuyPrice,
-    currentPrice: holding.currentPrice,
-    sector: holding.sector,
-  };
-}
-
-async function requireUserId() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
-  const payload = token ? verifyAuthToken(token) : null;
-  return payload?.sub ?? null;
-}
+import { serializeHolding } from "@/lib/portfolio";
+import { getAuthenticatedUserId } from "@/lib/session";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await requireUserId();
+  const userId = await getAuthenticatedUserId();
   if (!userId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -94,7 +75,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await requireUserId();
+  const userId = await getAuthenticatedUserId();
   if (!userId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }

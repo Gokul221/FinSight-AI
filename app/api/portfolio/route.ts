@@ -1,42 +1,24 @@
-import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db/connect";
 import { Holding, type HoldingDocument } from "@/models/Holding";
-import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/auth";
 import { isPositiveNumber } from "@/lib/validation";
-
-function serializeHolding(holding: HoldingDocument) {
-  return {
-    id: holding._id.toString(),
-    name: holding.name,
-    ticker: holding.ticker,
-    quantity: holding.quantity,
-    avgBuyPrice: holding.avgBuyPrice,
-    currentPrice: holding.currentPrice,
-    sector: holding.sector,
-  };
-}
+import { serializeHolding } from "@/lib/portfolio";
+import { getAuthenticatedUserId } from "@/lib/session";
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
-  const payload = token ? verifyAuthToken(token) : null;
-
-  if (!payload) {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   await connectToDatabase();
-  const holdings = (await Holding.find({ userId: payload.sub })) as HoldingDocument[];
+  const holdings = (await Holding.find({ userId })) as HoldingDocument[];
 
   return Response.json({ holdings: holdings.map(serializeHolding) });
 }
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
-  const payload = token ? verifyAuthToken(token) : null;
-
-  if (!payload) {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -62,7 +44,7 @@ export async function POST(request: Request) {
 
   await connectToDatabase();
   const holding = (await Holding.create({
-    userId: payload.sub,
+    userId,
     name,
     ticker,
     quantity,
