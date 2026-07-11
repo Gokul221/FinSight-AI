@@ -1,7 +1,7 @@
 import { connectToDatabase } from "@/lib/db/connect";
 import { Activity } from "@/models/Activity";
 
-export type ActivityType = "trade" | "price";
+export type ActivityType = "trade" | "price" | "document";
 
 export async function logActivity(userId: string, type: ActivityType, message: string): Promise<void> {
   await connectToDatabase();

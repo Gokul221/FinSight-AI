@@ -1,19 +1,35 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import DashboardShell from "@/components/layout/DashboardShell";
 import DocumentUploadZone from "@/components/documents/DocumentUploadZone";
 import DocumentList from "@/components/documents/DocumentList";
-import { documents } from "@/lib/mockData";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Document as DocumentType } from "@/lib/mockData";
 import { FileText, CheckCircle2, Cpu, Database } from "lucide-react";
 
-const statsData = [
-  { label: "Total Documents", value: "5", icon: <FileText className="w-4 h-4 text-indigo-400" /> },
-  { label: "Indexed", value: "3", icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" /> },
-  { label: "Total Chunks", value: "1,240", icon: <Database className="w-4 h-4 text-amber-400" /> },
-  { label: "Embedding Model", value: "text-embedding-3-small", icon: <Cpu className="w-4 h-4 text-slate-400" />, small: true },
-];
-
 export default function DocumentsPage() {
+  const [documents, setDocuments] = useState<DocumentType[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/documents")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load documents"))))
+      .then((data) => setDocuments(data.documents))
+      .catch(() => setDocuments([]));
+  }, []);
+
+  const loading = documents === null;
+  const docs = documents ?? [];
+  const indexedCount = docs.filter((d) => d.status === "indexed").length;
+  const totalChunks = docs.reduce((sum, d) => sum + (d.chunks ?? 0), 0);
+
+  const statsData = [
+    { label: "Total Documents", value: String(docs.length), icon: <FileText className="w-4 h-4 text-indigo-400" /> },
+    { label: "Indexed", value: String(indexedCount), icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" /> },
+    { label: "Total Chunks", value: totalChunks.toLocaleString(), icon: <Database className="w-4 h-4 text-amber-400" /> },
+    { label: "Embedding Model", value: "voyage-4", icon: <Cpu className="w-4 h-4 text-slate-400" />, small: true },
+  ];
+
   return (
     <DashboardShell>
       <div className="space-y-5">
@@ -42,10 +58,17 @@ export default function DocumentsPage() {
         </div>
 
         {/* Upload Zone */}
-        <DocumentUploadZone />
+        <DocumentUploadZone onUploaded={(doc) => setDocuments((prev) => [doc, ...(prev ?? [])])} />
 
         {/* Document List */}
-        <DocumentList />
+        {loading ? (
+          <Skeleton className="h-64" />
+        ) : (
+          <DocumentList
+            documents={docs}
+            onDeleted={(id) => setDocuments((prev) => (prev ?? []).filter((d) => d.id !== id))}
+          />
+        )}
       </div>
     </DashboardShell>
   );

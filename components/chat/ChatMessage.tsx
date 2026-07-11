@@ -51,20 +51,28 @@ export default function ChatMessage({ message }: { message: ChatMessageType }) {
               : "glass-card-2 text-slate-300 rounded-tl-none"
           )}
         >
-          {/* Render content with markdown-like bold */}
+          {/* Render content with markdown-like bold and bullet lists */}
           {message.content.split("\n").map((line, i) => {
-            const parts = line.split(/\*\*(.*?)\*\*/g);
-            return (
+            const bulletMatch = line.match(/^[*-]\s+(.*)/);
+            const lineText = bulletMatch ? bulletMatch[1] : line;
+            const parts = lineText.split(/\*\*(.*?)\*\*/g);
+            const rendered = parts.map((part, j) =>
+              j % 2 === 1 ? (
+                <strong key={j} className="text-white font-semibold">
+                  {part}
+                </strong>
+              ) : (
+                part
+              )
+            );
+            return bulletMatch ? (
+              <div key={i} className={cn("flex gap-2", i > 0 && "mt-2")}>
+                <span className="text-slate-500">•</span>
+                <p className="flex-1">{rendered}</p>
+              </div>
+            ) : (
               <p key={i} className={i > 0 ? "mt-2" : ""}>
-                {parts.map((part, j) =>
-                  j % 2 === 1 ? (
-                    <strong key={j} className="text-white font-semibold">
-                      {part}
-                    </strong>
-                  ) : (
-                    part
-                  )
-                )}
+                {rendered}
               </p>
             );
           })}

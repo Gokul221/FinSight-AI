@@ -43,7 +43,7 @@ export interface SourceCitation {
 export interface Document {
   id: string;
   name: string;
-  type: "PDF" | "CSV" | "XLSX";
+  type: "PDF" | "CSV" | "XLSX" | "TXT";
   size: string;
   status: "indexed" | "processing" | "failed";
   indexedOn: string;
@@ -125,114 +125,7 @@ export const portfolioChartData = [
   { date: "Jan 25", portfolio: 2643750, nifty: 2401000 },
 ];
 
-// ─── Chat History ──────────────────────────────────────────────────────────
-export const chatHistory: ChatMessage[] = [
-  {
-    id: "1",
-    role: "user",
-    content: "What is the revenue trend for TCS over the last 4 quarters?",
-    timestamp: "10:24 AM",
-  },
-  {
-    id: "2",
-    role: "assistant",
-    content:
-      "Based on TCS's Q3 FY2025 earnings report in your knowledge base, here is the quarterly revenue trend:\n\nTCS has shown consistent revenue growth over the last 4 quarters, with a CAGR of approximately 8.2%. The Q3 FY25 revenue came in at ₹63,973 crore — a 5.6% YoY increase — ahead of analyst estimates. CC (constant currency) growth stood at 4.5%, driven by strong momentum in BFSI and Manufacturing verticals.",
-    timestamp: "10:24 AM",
-    table: {
-      headers: ["Quarter", "Revenue (₹ Cr)", "YoY Growth", "CC Growth"],
-      rows: [
-        ["Q4 FY24", "61,237", "+3.5%", "+2.8%"],
-        ["Q1 FY25", "62,613", "+4.4%", "+3.2%"],
-        ["Q2 FY25", "63,148", "+5.1%", "+3.9%"],
-        ["Q3 FY25", "63,973", "+5.6%", "+4.5%"],
-      ],
-    },
-  },
-  {
-    id: "3",
-    role: "user",
-    content: "Should I increase my TCS allocation?",
-    timestamp: "10:26 AM",
-  },
-  {
-    id: "4",
-    role: "assistant",
-    content:
-      "Based on 3 documents in your knowledge base — TCS Q3 FY25 earnings, Portfolio Analysis Dec, and my current portfolio snapshot — here is my assessment:\n\n**Current Position**: You hold 25 shares at ₹3,480 avg. buy price, currently at ₹3,847 (10.5% unrealised gain). TCS represents 18.2% of your portfolio.\n\n**Recommendation**: Maintain current allocation. Adding more TCS would push IT sector weight above 40%, increasing concentration risk. Instead, consider deploying fresh capital into underweight sectors (Pharma at 7.9%).\n\n**Risks to watch**: US tech spending outlook, BFSI client discretionary spending cuts, and INR/USD movement impacting margins.",
-    timestamp: "10:26 AM",
-    sources: [
-      {
-        id: "s1",
-        docName: "TCS_Q3_2024_Earnings.pdf",
-        section: "Management Commentary, Pg. 12",
-        excerpt: "Revenue growth momentum is expected to continue into Q4 driven by BFSI deal ramp-ups...",
-        relevanceScore: 94,
-      },
-      {
-        id: "s2",
-        docName: "Portfolio_Analysis_Dec.csv",
-        section: "Sector Allocation Sheet",
-        excerpt: "IT sector currently at 35.4% portfolio weight as of December 2024...",
-        relevanceScore: 88,
-      },
-      {
-        id: "s3",
-        docName: "HDFC_Annual_Report_2024.pdf",
-        section: "Market Outlook, Pg. 34",
-        excerpt: "Technology sector valuations remain elevated relative to 5-year median P/E...",
-        relevanceScore: 72,
-      },
-    ],
-  },
-];
 
-// ─── Documents ─────────────────────────────────────────────────────────────
-export const documents: Document[] = [
-  {
-    id: "1",
-    name: "TCS_Q3_2024_Earnings.pdf",
-    type: "PDF",
-    size: "2.4 MB",
-    status: "indexed",
-    indexedOn: "12 Jan 2025",
-    chunks: 312,
-  },
-  {
-    id: "2",
-    name: "HDFC_Annual_Report_2024.pdf",
-    type: "PDF",
-    size: "8.1 MB",
-    status: "indexed",
-    indexedOn: "08 Jan 2025",
-    chunks: 748,
-  },
-  {
-    id: "3",
-    name: "Portfolio_Analysis_Dec.csv",
-    type: "CSV",
-    size: "140 KB",
-    status: "indexed",
-    indexedOn: "05 Jan 2025",
-    chunks: 180,
-  },
-  {
-    id: "4",
-    name: "Nifty_Rebalance_Jan.pdf",
-    type: "PDF",
-    size: "920 KB",
-    status: "processing",
-    indexedOn: "—",
-  },
-  {
-    id: "5",
-    name: "SEBI_Circular_2025.pdf",
-    type: "PDF",
-    size: "560 KB",
-    status: "failed",
-    indexedOn: "—",
-  },
-];
 
 // ─── Alerts ────────────────────────────────────────────────────────────────
 export const alerts: Alert[] = [
@@ -338,34 +231,3 @@ export const aiInsights = [
   },
 ];
 
-// ─── Source Citations ────────────────────────────────────────────────────────
-export const sourceCitations: SourceCitation[] = [
-  {
-    id: "s1",
-    docName: "TCS_Q3_2024_Earnings.pdf",
-    section: "Management Commentary, Pg. 12",
-    excerpt: "Revenue growth momentum expected to continue into Q4 driven by BFSI deal ramp-ups and manufacturing vertical expansion.",
-    relevanceScore: 94,
-  },
-  {
-    id: "s2",
-    docName: "Portfolio_Analysis_Dec.csv",
-    section: "Sector Allocation Sheet",
-    excerpt: "IT sector currently at 35.4% portfolio weight as of December 2024, above 30% recommended ceiling.",
-    relevanceScore: 88,
-  },
-  {
-    id: "s3",
-    docName: "HDFC_Annual_Report_2024.pdf",
-    section: "Market Outlook, Pg. 34",
-    excerpt: "Technology sector valuations remain elevated relative to 5-year median P/E of 28x vs current 34x.",
-    relevanceScore: 72,
-  },
-  {
-    id: "s4",
-    docName: "Nifty_Rebalance_Jan.pdf",
-    section: "Index Composition Changes",
-    excerpt: "Nifty 50 rebalancing effective February 2025 adds 2 new IT constituents, increasing sector weight to 17.2%.",
-    relevanceScore: 61,
-  },
-];

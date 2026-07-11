@@ -1,7 +1,7 @@
 "use client";
 
 import type { SerializedActivity } from "@/lib/activity";
-import { ArrowUpDown, RefreshCw, Clock } from "lucide-react";
+import { ArrowUpDown, RefreshCw, FileText, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const typeConfig: Record<
@@ -17,6 +17,11 @@ const typeConfig: Record<
     icon: <RefreshCw className="w-3.5 h-3.5" />,
     color: "text-indigo-400",
     bg: "bg-indigo-400/10",
+  },
+  document: {
+    icon: <FileText className="w-3.5 h-3.5" />,
+    color: "text-amber-400",
+    bg: "bg-amber-400/10",
   },
 };
 
