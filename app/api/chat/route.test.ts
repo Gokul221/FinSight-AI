@@ -195,4 +195,35 @@ describe("POST /api/chat", () => {
     expect(retrievedChunks).toEqual([]);
     expect(portfolio.holdings).toEqual([]);
   });
+
+  it("still persists an assistant reply when generation fails, instead of leaving the question orphaned", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    (getAuthenticatedUserId as any).mockResolvedValue("user-1");
+
+    const userMsg = makeMessage({ _id: { toString: () => "u1" }, role: "user", content: "hello" });
+    const assistantMsg = makeMessage({
+      _id: { toString: () => "a1" },
+      role: "assistant",
+      content: "Sorry, I ran into an error processing that. Please try again.",
+    });
+    (Message.create as any).mockResolvedValueOnce(userMsg).mockResolvedValueOnce(assistantMsg);
+
+    (Chunk.find as any).mockResolvedValue([]);
+    (Holding.find as any).mockResolvedValue([]);
+    const historySort = vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) });
+    (Message.find as any).mockReturnValue({ sort: historySort });
+    (generateChatResponse as any).mockRejectedValue(new Error("model not found"));
+
+    const res = await POST(makeRequest({ content: "hello" }));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(Message.create).toHaveBeenNthCalledWith(2, {
+      userId: "user-1",
+      role: "assistant",
+      content: "Sorry, I ran into an error processing that. Please try again.",
+      sources: [],
+    });
+    expect(json.assistantMessage.id).toBe("a1");
+  });
 });

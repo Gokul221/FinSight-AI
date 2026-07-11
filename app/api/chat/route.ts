@@ -54,45 +54,55 @@ export async function POST(request: Request) {
 
   const userMessage = (await Message.create({ userId, role: "user", content })) as MessageDocument;
 
-  // Retrieval: rank every stored chunk for this user by similarity to the question.
-  const allChunks = (await Chunk.find({ userId })) as ChunkDocument[];
+  // Retrieval + generation can fail on an external API hiccup (rate limit, model
+  // retirement, network blip). Fall back to an apologetic reply rather than leaving
+  // the user's question orphaned with no assistant response in history.
   let topMatches: { chunk: ChunkDocument; score: number }[] = [];
-  if (allChunks.length > 0) {
-    const queryEmbedding = await embedQuery(content);
-    topMatches = allChunks
-      .map((chunk) => ({ chunk, score: cosineSimilarity(queryEmbedding, chunk.embedding) }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, TOP_K);
-  }
-
-  // Structured portfolio context, injected directly (not retrieved via embeddings).
-  const rawHoldings = (await Holding.find({ userId })) as HoldingDocument[];
-  const holdings = withComputedFields(rawHoldings.map((h) => serializeHolding(h)));
-  const totals = portfolioTotals(holdings);
-
-  // Recent conversational history, oldest first, excluding the message just saved above.
-  const historyDocs = (await Message.find({ userId })
-    .sort({ createdAt: -1 })
-    .limit(HISTORY_TURNS + 1)) as MessageDocument[];
-  const history = historyDocs
-    .slice(1)
-    .reverse()
-    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
-
-  const replyText = await generateChatResponse(
-    content,
-    history,
-    topMatches.map(({ chunk }) => ({ documentName: chunk.documentName, text: chunk.text })),
-    {
-      ...totals,
-      holdings: holdings.map((h) => ({
-        ticker: h.ticker,
-        sector: h.sector,
-        weight: h.weight,
-        pnlPercent: h.pnlPercent,
-      })),
+  let replyText: string;
+  try {
+    // Retrieval: rank every stored chunk for this user by similarity to the question.
+    const allChunks = (await Chunk.find({ userId })) as ChunkDocument[];
+    if (allChunks.length > 0) {
+      const queryEmbedding = await embedQuery(content);
+      topMatches = allChunks
+        .map((chunk) => ({ chunk, score: cosineSimilarity(queryEmbedding, chunk.embedding) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, TOP_K);
     }
-  );
+
+    // Structured portfolio context, injected directly (not retrieved via embeddings).
+    const rawHoldings = (await Holding.find({ userId })) as HoldingDocument[];
+    const holdings = withComputedFields(rawHoldings.map((h) => serializeHolding(h)));
+    const totals = portfolioTotals(holdings);
+
+    // Recent conversational history, oldest first, excluding the message just saved above.
+    const historyDocs = (await Message.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(HISTORY_TURNS + 1)) as MessageDocument[];
+    const history = historyDocs
+      .slice(1)
+      .reverse()
+      .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+    replyText = await generateChatResponse(
+      content,
+      history,
+      topMatches.map(({ chunk }) => ({ documentName: chunk.documentName, text: chunk.text })),
+      {
+        ...totals,
+        holdings: holdings.map((h) => ({
+          ticker: h.ticker,
+          sector: h.sector,
+          weight: h.weight,
+          pnlPercent: h.pnlPercent,
+        })),
+      }
+    );
+  } catch (error) {
+    console.error("Chat generation failed:", error);
+    topMatches = [];
+    replyText = "Sorry, I ran into an error processing that. Please try again.";
+  }
 
   const assistantMessage = (await Message.create({
     userId,
