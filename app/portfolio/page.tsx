@@ -8,7 +8,7 @@ import PerformanceChart from "@/components/portfolio/PerformanceChart";
 import AddHoldingDialog from "@/components/portfolio/AddHoldingDialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { withComputedFields, type RawHolding } from "@/lib/portfolio";
+import { withComputedFields, portfolioTotals, type RawHolding } from "@/lib/portfolio";
 import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 
 export default function PortfolioPage() {
@@ -41,11 +41,7 @@ export default function PortfolioPage() {
 
   const loading = rawHoldings === null && !error;
   const holdings = withComputedFields(rawHoldings ?? []);
-
-  const totalValue = holdings.reduce((s, h) => s + h.currentValue, 0);
-  const totalPnL = holdings.reduce((s, h) => s + h.pnl, 0);
-  const costBasis = totalValue - totalPnL;
-  const totalPnLPercent = costBasis > 0 ? ((totalPnL / costBasis) * 100).toFixed(2) : "0.00";
+  const { totalValue, totalPnL, totalPnLPercent } = portfolioTotals(holdings);
   const pnlPositive = totalPnL >= 0;
 
   return (
@@ -86,7 +82,7 @@ export default function PortfolioPage() {
                     {pnlPositive ? "+" : ""}₹{Math.abs(totalPnL).toLocaleString("en-IN")}
                     <span className="text-sm font-normal">
                       ({pnlPositive ? "+" : ""}
-                      {totalPnLPercent}%)
+                      {totalPnLPercent.toFixed(2)}%)
                     </span>
                   </p>
                 </div>
@@ -134,7 +130,7 @@ export default function PortfolioPage() {
 
             {/* Right: Donut + Performance */}
             <div className="xl:col-span-5 space-y-4">
-              <AllocationDonut />
+              <AllocationDonut holdings={holdings} />
               <PerformanceChart />
             </div>
           </div>

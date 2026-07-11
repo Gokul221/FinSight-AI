@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { allocationData } from "@/lib/mockData";
+import type { Holding } from "@/lib/mockData";
+import { computeSectorAllocation } from "@/lib/portfolio";
 
 const CustomTooltip = ({
   active,
@@ -30,8 +31,9 @@ const CustomTooltip = ({
   return null;
 };
 
-export default function AllocationDonut() {
+export default function AllocationDonut({ holdings }: { holdings: Holding[] }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const allocationData = computeSectorAllocation(holdings);
 
   return (
     <div className="glass-card p-5">
@@ -42,6 +44,11 @@ export default function AllocationDonut() {
         <span className="text-[10px] text-slate-500">Click to highlight</span>
       </div>
 
+      {allocationData.length === 0 ? (
+        <p className="text-xs text-slate-500 py-8 text-center">
+          Add a holding to see your sector breakdown.
+        </p>
+      ) : (
       <div className="flex items-center gap-4">
         <div className="flex-1">
           <ResponsiveContainer width="100%" height={160}>
@@ -100,6 +107,7 @@ export default function AllocationDonut() {
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { Holding } from "@/lib/mockData";
+import type { AllocationData, Holding } from "@/lib/mockData";
 
 export type RawHolding = Pick<
   Holding,
@@ -44,4 +44,55 @@ export function withComputedFields(raw: RawHolding[]): Holding[] {
     ...h,
     weight: totalValue > 0 ? Math.round((h.currentValue / totalValue) * 1000) / 10 : 0,
   }));
+}
+
+export function portfolioTotals(holdings: Holding[]) {
+  const totalValue = holdings.reduce((s, h) => s + h.currentValue, 0);
+  const totalPnL = holdings.reduce((s, h) => s + h.pnl, 0);
+  const costBasis = totalValue - totalPnL;
+  const totalPnLPercent = costBasis > 0 ? (totalPnL / costBasis) * 100 : 0;
+  return { totalValue, totalPnL, totalPnLPercent };
+}
+
+// Validated categorical dark-mode palette (fixed order, never cycled — see
+// dataviz skill). Sectors beyond the palette size fold into a neutral "Other"
+// slot rather than generating a new hue.
+const SECTOR_PALETTE = [
+  "#3987e5", // blue
+  "#199e70", // aqua
+  "#c98500", // yellow
+  "#008300", // green
+  "#9085e9", // violet
+  "#e66767", // red
+  "#d55181", // magenta
+  "#d95926", // orange
+];
+const OTHER_SECTOR_COLOR = "#64748B";
+
+export function computeSectorAllocation(holdings: Holding[]): AllocationData[] {
+  const totalValue = holdings.reduce((s, h) => s + h.currentValue, 0);
+  if (totalValue === 0) return [];
+
+  const valueBySector = new Map<string, number>();
+  for (const h of holdings) {
+    valueBySector.set(h.sector, (valueBySector.get(h.sector) ?? 0) + h.currentValue);
+  }
+
+  // Sorted alphabetically so a given sector name maps to the same palette
+  // slot deterministically, independent of insertion order.
+  const sectors = [...valueBySector.entries()]
+    .map(([name, value]) => ({ name, value: Math.round((value / totalValue) * 1000) / 10 }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const primary = sectors
+    .slice(0, SECTOR_PALETTE.length)
+    .map((s, i) => ({ ...s, color: SECTOR_PALETTE[i] }));
+
+  const overflow = sectors.slice(SECTOR_PALETTE.length);
+  if (overflow.length > 0) {
+    const otherValue = Math.round(overflow.reduce((sum, s) => sum + s.value, 0) * 10) / 10;
+    primary.push({ name: "Other", value: otherValue, color: OTHER_SECTOR_COLOR });
+  }
+
+  return primary;
 }

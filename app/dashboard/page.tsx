@@ -1,17 +1,51 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import DashboardShell from "@/components/layout/DashboardShell";
 import KPICard from "@/components/dashboard/KPICard";
 import PortfolioChart from "@/components/dashboard/PortfolioChart";
 import AIInsightBanner from "@/components/dashboard/AIInsightBanner";
 import MarketMoverCard from "@/components/dashboard/MarketMoverCard";
 import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
-import { kpiData } from "@/lib/mockData";
+import { kpiData, type KPI } from "@/lib/mockData";
 import { useApp } from "@/lib/AppContext";
+import { withComputedFields, portfolioTotals, type RawHolding } from "@/lib/portfolio";
 
 export default function DashboardPage() {
   const { user } = useApp();
   const firstName = user?.name.trim().split(/\s+/)[0];
+  const [rawHoldings, setRawHoldings] = useState<RawHolding[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/portfolio")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load portfolio"))))
+      .then((data) => setRawHoldings(data.holdings))
+      .catch(() => setRawHoldings([]));
+  }, []);
+
+  const holdings = withComputedFields(rawHoldings ?? []);
+  const { totalValue, totalPnL, totalPnLPercent } = portfolioTotals(holdings);
+  const pnlPositive = totalPnL >= 0;
+  const pnlDeltaType = totalPnL === 0 ? "neutral" : pnlPositive ? "positive" : "negative";
+
+  const portfolioKpis: KPI[] = [
+    {
+      label: "Total Portfolio Value",
+      value: `₹${totalValue.toLocaleString("en-IN")}`,
+      delta: `${pnlPositive ? "+" : ""}₹${Math.abs(totalPnL).toLocaleString("en-IN")} (${pnlPositive ? "+" : ""}${totalPnLPercent.toFixed(2)}%)`,
+      deltaType: pnlDeltaType,
+      subtext: "vs cost basis",
+      icon: "TrendingUp",
+    },
+    {
+      label: "Total P&L",
+      value: `${pnlPositive ? "+" : ""}₹${Math.abs(totalPnL).toLocaleString("en-IN")}`,
+      delta: `${pnlPositive ? "+" : ""}${totalPnLPercent.toFixed(2)}%`,
+      deltaType: pnlDeltaType,
+      subtext: "unrealized",
+      icon: "BarChart3",
+    },
+  ];
 
   return (
     <DashboardShell>
@@ -28,7 +62,7 @@ export default function DashboardPage() {
 
         {/* Row 1: KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {kpiData.map((kpi, i) => (
+          {[...portfolioKpis, ...kpiData].map((kpi, i) => (
             <KPICard key={kpi.label} kpi={kpi} index={i} />
           ))}
         </div>

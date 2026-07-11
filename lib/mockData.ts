@@ -99,23 +99,10 @@ export interface ActivityItem {
 }
 
 // ─── KPI Data ──────────────────────────────────────────────────────────────
+// "Total Portfolio Value" and "Today's P&L" are computed from real holdings
+// on the dashboard page instead of hardcoded here — Risk Score and AI
+// Insights have no real backing logic yet, so they stay mock for now.
 export const kpiData: KPI[] = [
-  {
-    label: "Total Portfolio Value",
-    value: "₹28,43,750",
-    delta: "+₹1,24,300 (4.6%)",
-    deltaType: "positive",
-    subtext: "vs last month",
-    icon: "TrendingUp",
-  },
-  {
-    label: "Today's P&L",
-    value: "+₹18,240",
-    delta: "+0.64%",
-    deltaType: "positive",
-    subtext: "vs yesterday",
-    icon: "BarChart3",
-  },
   {
     label: "Risk Score",
     value: "6.4 / 10",
@@ -132,16 +119,6 @@ export const kpiData: KPI[] = [
     subtext: "3 require action",
     icon: "Sparkles",
   },
-];
-
-// ─── Allocation Data ────────────────────────────────────────────────────────
-export const allocationData: AllocationData[] = [
-  { name: "IT", value: 35, color: "#6366F1" },
-  { name: "Banking", value: 25, color: "#10B981" },
-  { name: "Energy", value: 15, color: "#F59E0B" },
-  { name: "FMCG", value: 12, color: "#5c8df6ff" },
-  { name: "Pharma", value: 8, color: "#F43F5E" },
-  { name: "Others", value: 5, color: "#64748B" },
 ];
 
 // ─── Performance History ────────────────────────────────────────────────────
