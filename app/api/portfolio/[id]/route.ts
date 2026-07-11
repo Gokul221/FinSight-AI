@@ -3,6 +3,7 @@ import { Holding, type HoldingDocument } from "@/models/Holding";
 import { isPositiveNumber } from "@/lib/validation";
 import { serializeHolding } from "@/lib/portfolio";
 import { getAuthenticatedUserId } from "@/lib/session";
+import { logActivity } from "@/lib/activity";
 
 export async function PATCH(
   request: Request,
@@ -68,6 +69,8 @@ export async function PATCH(
     return Response.json({ error: "Holding not found." }, { status: 404 });
   }
 
+  await logActivity(userId, "trade", `Updated your ${holding.ticker} holding`);
+
   return Response.json({ holding: serializeHolding(holding) });
 }
 
@@ -83,11 +86,13 @@ export async function DELETE(
   const { id } = await params;
 
   await connectToDatabase();
-  const holding = await Holding.findOneAndDelete({ _id: id, userId });
+  const holding = (await Holding.findOneAndDelete({ _id: id, userId })) as HoldingDocument | null;
 
   if (!holding) {
     return Response.json({ error: "Holding not found." }, { status: 404 });
   }
+
+  await logActivity(userId, "trade", `Removed ${holding.ticker} from your portfolio`);
 
   return Response.json({ success: true });
 }

@@ -3,6 +3,7 @@ import { Holding, type HoldingDocument } from "@/models/Holding";
 import { isPositiveNumber } from "@/lib/validation";
 import { serializeHolding } from "@/lib/portfolio";
 import { getAuthenticatedUserId } from "@/lib/session";
+import { logActivity } from "@/lib/activity";
 
 export async function GET() {
   const userId = await getAuthenticatedUserId();
@@ -52,6 +53,8 @@ export async function POST(request: Request) {
     currentPrice,
     sector,
   })) as HoldingDocument;
+
+  await logActivity(userId, "trade", `Added ${quantity} share${quantity === 1 ? "" : "s"} of ${ticker} to your portfolio`);
 
   return Response.json({ holding: serializeHolding(holding) }, { status: 201 });
 }

@@ -10,17 +10,37 @@ import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
 import { kpiData, type KPI } from "@/lib/mockData";
 import { useApp } from "@/lib/AppContext";
 import { withComputedFields, portfolioTotals, type RawHolding } from "@/lib/portfolio";
+import type { MarketMoverQuote } from "@/lib/marketData";
+import type { SerializedActivity } from "@/lib/activity";
+
+const todayLabel = new Date().toLocaleDateString("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
 
 export default function DashboardPage() {
   const { user } = useApp();
   const firstName = user?.name.trim().split(/\s+/)[0];
   const [rawHoldings, setRawHoldings] = useState<RawHolding[] | null>(null);
+  const [movers, setMovers] = useState<MarketMoverQuote[]>([]);
+  const [activity, setActivity] = useState<SerializedActivity[]>([]);
 
   useEffect(() => {
     fetch("/api/portfolio")
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load portfolio"))))
       .then((data) => setRawHoldings(data.holdings))
       .catch(() => setRawHoldings([]));
+
+    fetch("/api/market-movers")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load market movers"))))
+      .then((data) => setMovers(data.movers))
+      .catch(() => setMovers([]));
+
+    fetch("/api/activity")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load activity"))))
+      .then((data) => setActivity(data.activity))
+      .catch(() => setActivity([]));
   }, []);
 
   const holdings = withComputedFields(rawHoldings ?? []);
@@ -56,7 +76,7 @@ export default function DashboardPage() {
             Good morning{firstName ? `, ${firstName}` : ""} 👋
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Here&apos;s your portfolio snapshot for today — 27 Jan 2025
+            Here&apos;s your portfolio snapshot for today — {todayLabel}
           </p>
         </div>
 
@@ -79,8 +99,8 @@ export default function DashboardPage() {
 
         {/* Row 3: Market Movers + Activity */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <MarketMoverCard />
-          <RecentActivityFeed />
+          <MarketMoverCard movers={movers} />
+          <RecentActivityFeed activity={activity} />
         </div>
       </div>
     </DashboardShell>

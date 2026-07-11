@@ -3,6 +3,7 @@ import { Holding, type HoldingDocument } from "@/models/Holding";
 import { serializeHolding } from "@/lib/portfolio";
 import { getAuthenticatedUserId } from "@/lib/session";
 import { getNseQuotes } from "@/lib/marketData";
+import { logActivity } from "@/lib/activity";
 
 export async function POST() {
   const userId = await getAuthenticatedUserId();
@@ -30,6 +31,11 @@ export async function POST() {
             update: { $set: { currentPrice: prices.get(h.ticker) } },
           },
         }))
+    );
+    await logActivity(
+      userId,
+      "price",
+      `Refreshed live prices for ${prices.size} holding${prices.size === 1 ? "" : "s"}`
     );
   }
 

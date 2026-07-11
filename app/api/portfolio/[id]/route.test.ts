@@ -13,8 +13,13 @@ vi.mock("@/models/Holding", () => ({
   Holding: { findOneAndUpdate: vi.fn(), findOneAndDelete: vi.fn() },
 }));
 
+vi.mock("@/lib/activity", () => ({
+  logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { signAuthToken } from "@/lib/auth";
 import { Holding } from "@/models/Holding";
+import { logActivity } from "@/lib/activity";
 import { PATCH, DELETE } from "./route";
 
 function makeRequest(method: string, body?: unknown) {
@@ -85,6 +90,7 @@ describe("PATCH /api/portfolio/[id]", () => {
 
     expect(res.status).toBe(200);
     expect(json.holding.quantity).toBe(15);
+    expect(logActivity).toHaveBeenCalledWith("user-1", "trade", expect.stringContaining("TCS"));
   });
 });
 
@@ -109,12 +115,16 @@ describe("DELETE /api/portfolio/[id]", () => {
 
   it("returns success when the holding is deleted", async () => {
     authedCookie("user-1");
-    (Holding.findOneAndDelete as any).mockResolvedValue({ _id: { toString: () => "h1" } });
+    (Holding.findOneAndDelete as any).mockResolvedValue({
+      _id: { toString: () => "h1" },
+      ticker: "TCS",
+    });
 
     const res = await DELETE(makeRequest("DELETE"), ctx());
     const json = await res.json();
 
     expect(res.status).toBe(200);
     expect(json.success).toBe(true);
+    expect(logActivity).toHaveBeenCalledWith("user-1", "trade", expect.stringContaining("TCS"));
   });
 });

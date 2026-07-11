@@ -13,8 +13,13 @@ vi.mock("@/models/Holding", () => ({
   Holding: { find: vi.fn(), create: vi.fn() },
 }));
 
+vi.mock("@/lib/activity", () => ({
+  logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { signAuthToken } from "@/lib/auth";
 import { Holding } from "@/models/Holding";
+import { logActivity } from "@/lib/activity";
 import { GET, POST } from "./route";
 
 function makeRequest(body: unknown) {
@@ -137,6 +142,7 @@ describe("POST /api/portfolio", () => {
     expect(Holding.create).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "user-1", ticker: "TCS", currentPrice: 3000 })
     );
+    expect(logActivity).toHaveBeenCalledWith("user-1", "trade", expect.stringContaining("TCS"));
     expect(res.status).toBe(201);
     expect(json.holding.id).toBe("h1");
   });

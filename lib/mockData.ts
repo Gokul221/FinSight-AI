@@ -69,15 +69,6 @@ export interface WatchlistStock {
   status: "active" | "triggered";
 }
 
-export interface MarketMover {
-  ticker: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  sparkline: number[];
-}
-
 export interface AllocationData {
   name: string;
   value: number;
@@ -89,13 +80,6 @@ export interface PerformancePoint {
   portfolio: number;
   nifty50: number;
   niftyNext50: number;
-}
-
-export interface ActivityItem {
-  id: string;
-  type: "trade" | "ai" | "alert" | "document";
-  message: string;
-  timestamp: string;
 }
 
 // ─── KPI Data ──────────────────────────────────────────────────────────────
@@ -323,98 +307,6 @@ export const watchlistStocks: WatchlistStock[] = [
     currentPrice: 7580,
     alertType: "Price Target",
     status: "active",
-  },
-];
-
-// ─── Market Movers ──────────────────────────────────────────────────────────
-export const marketMovers: MarketMover[] = [
-  {
-    ticker: "RELIANCE",
-    name: "Reliance Ind.",
-    price: 2763,
-    change: 42.5,
-    changePercent: 1.56,
-    sparkline: [2680, 2700, 2690, 2720, 2735, 2748, 2763],
-  },
-  {
-    ticker: "TCS",
-    name: "TCS",
-    price: 3847,
-    change: 68.3,
-    changePercent: 1.81,
-    sparkline: [3760, 3780, 3770, 3800, 3820, 3838, 3847],
-  },
-  {
-    ticker: "INFY",
-    name: "Infosys",
-    price: 1648,
-    change: 51.2,
-    changePercent: 3.21,
-    sparkline: [1580, 1595, 1590, 1610, 1628, 1641, 1648],
-  },
-  {
-    ticker: "HDFCBANK",
-    name: "HDFC Bank",
-    price: 1724,
-    change: -18.5,
-    changePercent: -1.06,
-    sparkline: [1750, 1742, 1738, 1730, 1728, 1726, 1724],
-  },
-  {
-    ticker: "WIPRO",
-    name: "Wipro",
-    price: 471,
-    change: -12.3,
-    changePercent: -2.54,
-    sparkline: [490, 485, 481, 478, 475, 473, 471],
-  },
-  {
-    ticker: "ICICIBANK",
-    name: "ICICI Bank",
-    price: 978,
-    change: 14.7,
-    changePercent: 1.52,
-    sparkline: [960, 963, 968, 970, 974, 976, 978],
-  },
-];
-
-// ─── Recent Activity ────────────────────────────────────────────────────────
-export const recentActivity: ActivityItem[] = [
-  {
-    id: "1",
-    type: "trade",
-    message: "Bought 10 shares of TCS at ₹3,840",
-    timestamp: "Today, 2:30 PM",
-  },
-  {
-    id: "2",
-    type: "ai",
-    message: "AI generated portfolio risk report — 3 action items",
-    timestamp: "Today, 11:45 AM",
-  },
-  {
-    id: "3",
-    type: "alert",
-    message: "HDFC Bank earnings alert triggered — Q3 results beat estimates",
-    timestamp: "Today, 9:15 AM",
-  },
-  {
-    id: "4",
-    type: "document",
-    message: "Document 'TCS_Q3_2024_Earnings.pdf' indexed — 312 chunks",
-    timestamp: "Yesterday, 4:20 PM",
-  },
-  {
-    id: "5",
-    type: "ai",
-    message: "Rebalancing suggestion generated — Pharma underweight by 4%",
-    timestamp: "Yesterday, 2:00 PM",
-  },
-  {
-    id: "6",
-    type: "trade",
-    message: "Sold 5 shares of WIPRO at ₹498",
-    timestamp: "2 days ago",
   },
 ];
 

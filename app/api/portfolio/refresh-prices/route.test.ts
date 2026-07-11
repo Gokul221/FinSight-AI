@@ -16,9 +16,14 @@ vi.mock("@/lib/marketData", () => ({
   getNseQuotes: vi.fn(),
 }));
 
+vi.mock("@/lib/activity", () => ({
+  logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { getAuthenticatedUserId } from "@/lib/session";
 import { Holding } from "@/models/Holding";
 import { getNseQuotes } from "@/lib/marketData";
+import { logActivity } from "@/lib/activity";
 import { POST } from "./route";
 
 function makeHolding(overrides: Partial<Record<string, unknown>> = {}) {
@@ -83,9 +88,10 @@ describe("POST /api/portfolio/refresh-prices", () => {
     ]);
     expect(json.updated).toBe(1);
     expect(json.holdings[0].currentPrice).toBe(3847);
+    expect(logActivity).toHaveBeenCalledWith("user-1", "price", expect.stringContaining("1"));
   });
 
-  it("skips the bulk write entirely when no quotes resolve", async () => {
+  it("skips the bulk write and activity log entirely when no quotes resolve", async () => {
     (getAuthenticatedUserId as any).mockResolvedValue("user-1");
     (Holding.find as any).mockResolvedValue([makeHolding({ ticker: "FAKETICKER" })]);
     (getNseQuotes as any).mockResolvedValue(new Map());
@@ -94,6 +100,7 @@ describe("POST /api/portfolio/refresh-prices", () => {
     const json = await res.json();
 
     expect(Holding.bulkWrite).not.toHaveBeenCalled();
+    expect(logActivity).not.toHaveBeenCalled();
     expect(json.updated).toBe(0);
   });
 });
