@@ -10,7 +10,7 @@ vi.mock("@/lib/db/connect", () => ({
 }));
 
 vi.mock("@/models/Holding", () => ({
-  Holding: { findOneAndUpdate: vi.fn(), findOneAndDelete: vi.fn() },
+  Holding: { findOneAndUpdate: vi.fn(), findOneAndDelete: vi.fn(), distinct: vi.fn() },
 }));
 
 vi.mock("@/lib/activity", () => ({
@@ -40,6 +40,7 @@ function authedCookie(sub = "user-1") {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  (Holding.distinct as any).mockResolvedValue([]);
 });
 
 describe("PATCH /api/portfolio/[id]", () => {
@@ -91,6 +92,29 @@ describe("PATCH /api/portfolio/[id]", () => {
     expect(res.status).toBe(200);
     expect(json.holding.quantity).toBe(15);
     expect(logActivity).toHaveBeenCalledWith("user-1", "trade", expect.stringContaining("TCS"));
+  });
+
+  it("reuses the existing sector's casing instead of creating a case-variant duplicate", async () => {
+    authedCookie("user-1");
+    (Holding.distinct as any).mockResolvedValue(["Banking"]);
+    (Holding.findOneAndUpdate as any).mockResolvedValue({
+      _id: { toString: () => "h1" },
+      name: "HDFC Bank",
+      ticker: "HDFCBANK",
+      quantity: 10,
+      avgBuyPrice: 1500,
+      currentPrice: 1600,
+      sector: "Banking",
+    });
+
+    await PATCH(makeRequest("PATCH", { sector: "banking" }), ctx());
+
+    expect(Holding.distinct).toHaveBeenCalledWith("sector", { userId: "user-1" });
+    expect(Holding.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: "h1", userId: "user-1" },
+      { $set: { sector: "Banking" } },
+      { new: true }
+    );
   });
 });
 

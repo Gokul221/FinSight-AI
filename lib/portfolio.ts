@@ -46,6 +46,14 @@ export function withComputedFields(raw: RawHolding[]): Holding[] {
   }));
 }
 
+// Matches a newly entered sector against the user's existing sectors case-insensitively,
+// so "IT", "it", and "It" all collapse to whichever casing was already stored — otherwise
+// the allocation donut splits one sector into several due to input casing alone.
+export function resolveSectorName(sector: string, existingSectors: string[]): string {
+  const match = existingSectors.find((s) => s.toLowerCase() === sector.toLowerCase());
+  return match ?? sector;
+}
+
 export function portfolioTotals(holdings: Holding[]) {
   const totalValue = holdings.reduce((s, h) => s + h.currentValue, 0);
   const totalPnL = holdings.reduce((s, h) => s + h.pnl, 0);

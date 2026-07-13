@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { computeSectorAllocation, portfolioTotals, withComputedFields, type RawHolding } from "./portfolio";
+import {
+  computeSectorAllocation,
+  portfolioTotals,
+  resolveSectorName,
+  withComputedFields,
+  type RawHolding,
+} from "./portfolio";
 
 function raw(overrides: Partial<RawHolding> = {}): RawHolding {
   return {
@@ -34,6 +40,21 @@ describe("withComputedFields", () => {
 
   it("returns 0 pnlPercent and weight for an empty list without dividing by zero", () => {
     expect(withComputedFields([])).toEqual([]);
+  });
+});
+
+describe("resolveSectorName", () => {
+  it("reuses an existing sector's casing on a case-insensitive match", () => {
+    expect(resolveSectorName("it", ["IT", "Banking"])).toBe("IT");
+    expect(resolveSectorName("BANKING", ["IT", "Banking"])).toBe("Banking");
+  });
+
+  it("returns the input unchanged when no existing sector matches", () => {
+    expect(resolveSectorName("Pharma", ["IT", "Banking"])).toBe("Pharma");
+  });
+
+  it("returns the input unchanged when there are no existing sectors", () => {
+    expect(resolveSectorName("IT", [])).toBe("IT");
   });
 });
 

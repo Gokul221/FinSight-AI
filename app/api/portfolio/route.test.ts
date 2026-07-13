@@ -10,7 +10,7 @@ vi.mock("@/lib/db/connect", () => ({
 }));
 
 vi.mock("@/models/Holding", () => ({
-  Holding: { find: vi.fn(), create: vi.fn() },
+  Holding: { find: vi.fn(), create: vi.fn(), distinct: vi.fn() },
 }));
 
 vi.mock("@/lib/activity", () => ({
@@ -36,6 +36,7 @@ function authedCookie(sub = "user-1") {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  (Holding.distinct as any).mockResolvedValue([]);
 });
 
 describe("GET /api/portfolio", () => {
@@ -145,5 +146,26 @@ describe("POST /api/portfolio", () => {
     expect(logActivity).toHaveBeenCalledWith("user-1", "trade", expect.stringContaining("TCS"));
     expect(res.status).toBe(201);
     expect(json.holding.id).toBe("h1");
+  });
+
+  it("reuses the existing sector's casing instead of creating a case-variant duplicate", async () => {
+    authedCookie("user-1");
+    (Holding.distinct as any).mockResolvedValue(["IT"]);
+    (Holding.create as any).mockResolvedValue({
+      _id: { toString: () => "h2" },
+      name: "Infosys",
+      ticker: "INFY",
+      quantity: 5,
+      avgBuyPrice: 1400,
+      currentPrice: 1400,
+      sector: "IT",
+    });
+
+    await POST(
+      makeRequest({ ticker: "INFY", name: "Infosys", sector: "it", quantity: 5, avgBuyPrice: 1400 })
+    );
+
+    expect(Holding.distinct).toHaveBeenCalledWith("sector", { userId: "user-1" });
+    expect(Holding.create).toHaveBeenCalledWith(expect.objectContaining({ sector: "IT" }));
   });
 });

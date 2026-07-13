@@ -1,7 +1,7 @@
 import { connectToDatabase } from "@/lib/db/connect";
 import { Holding, type HoldingDocument } from "@/models/Holding";
 import { isPositiveNumber } from "@/lib/validation";
-import { serializeHolding } from "@/lib/portfolio";
+import { serializeHolding, resolveSectorName } from "@/lib/portfolio";
 import { getAuthenticatedUserId } from "@/lib/session";
 import { logActivity } from "@/lib/activity";
 
@@ -59,6 +59,12 @@ export async function PATCH(
   }
 
   await connectToDatabase();
+
+  if (typeof updates.sector === "string") {
+    const existingSectors = (await Holding.distinct("sector", { userId })) as string[];
+    updates.sector = resolveSectorName(updates.sector, existingSectors);
+  }
+
   const holding = (await Holding.findOneAndUpdate(
     { _id: id, userId },
     { $set: updates },

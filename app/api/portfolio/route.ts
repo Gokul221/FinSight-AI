@@ -1,7 +1,7 @@
 import { connectToDatabase } from "@/lib/db/connect";
 import { Holding, type HoldingDocument } from "@/models/Holding";
 import { isPositiveNumber } from "@/lib/validation";
-import { serializeHolding } from "@/lib/portfolio";
+import { serializeHolding, resolveSectorName } from "@/lib/portfolio";
 import { getAuthenticatedUserId } from "@/lib/session";
 import { logActivity } from "@/lib/activity";
 
@@ -44,6 +44,7 @@ export async function POST(request: Request) {
   }
 
   await connectToDatabase();
+  const existingSectors = (await Holding.distinct("sector", { userId })) as string[];
   const holding = (await Holding.create({
     userId,
     name,
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     quantity,
     avgBuyPrice,
     currentPrice,
-    sector,
+    sector: resolveSectorName(sector, existingSectors),
   })) as HoldingDocument;
 
   await logActivity(userId, "trade", `Added ${quantity} share${quantity === 1 ? "" : "s"} of ${ticker} to your portfolio`);
