@@ -1,19 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { portfolioHoldings } from "@/lib/mockData";
-import { ArrowUpDown, ArrowUpRight, ArrowDownRight, MessageSquare, Bell } from "lucide-react";
+import type { Holding } from "@/lib/mockData";
+import {
+  ArrowUpDown,
+  ArrowUpRight,
+  ArrowDownRight,
+  MessageSquare,
+  Bell,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 type SortKey = "name" | "currentValue" | "pnl" | "pnlPercent" | "weight";
 
-export default function HoldingsTable() {
+export default function HoldingsTable({ holdings }: { holdings: Holding[] }) {
   const [sortKey, setSortKey] = useState<SortKey>("currentValue");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  const sorted = [...portfolioHoldings].sort((a, b) => {
+  if (holdings.length === 0) {
+    return (
+      <div className="glass-card p-10 flex flex-col items-center justify-center text-center gap-2">
+        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center text-slate-500 mb-1">
+          <Wallet className="w-5 h-5" />
+        </div>
+        <p className="text-sm font-medium text-slate-200">No holdings yet</p>
+        <p className="text-xs text-slate-500 max-w-xs">
+          Add the stocks you own to see your portfolio value, allocation, and
+          P&amp;L here.
+        </p>
+      </div>
+    );
+  }
+
+  const sorted = [...holdings].sort((a, b) => {
     const va = a[sortKey];
     const vb = b[sortKey];
     if (typeof va === "string" && typeof vb === "string") {
@@ -48,14 +70,14 @@ export default function HoldingsTable() {
       className={cn(
         "px-3 py-3 text-[10px] uppercase tracking-wider text-slate-500 font-medium whitespace-nowrap",
         align === "right" ? "text-right" : "text-left",
-        sortable && "cursor-pointer hover:text-slate-300 select-none"
+        sortable && "cursor-pointer hover:text-slate-300 select-none",
       )}
       onClick={sortable ? () => handleSort(sortable) : undefined}
     >
       <div
         className={cn(
           "flex items-center gap-1",
-          align === "right" ? "justify-end" : "justify-start"
+          align === "right" ? "justify-end" : "justify-start",
         )}
       >
         {label}
@@ -71,7 +93,7 @@ export default function HoldingsTable() {
       <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200">Holdings</h3>
         <span className="text-xs text-slate-500">
-          {portfolioHoldings.length} positions
+          {holdings.length} positions
         </span>
       </div>
       <div className="overflow-x-auto">
@@ -131,7 +153,7 @@ export default function HoldingsTable() {
                     <div
                       className={cn(
                         "flex flex-col items-end gap-0.5",
-                        positive ? "text-emerald-400" : "text-rose-400"
+                        positive ? "text-emerald-400" : "text-rose-400",
                       )}
                     >
                       <div className="flex items-center gap-0.5 text-xs font-num font-bold">
@@ -158,7 +180,9 @@ export default function HoldingsTable() {
                       <div className="w-12 h-1 bg-white/[0.08] rounded-full overflow-hidden">
                         <div
                           className="h-full bg-indigo-500 rounded-full"
-                          style={{ width: `${Math.min(h.weight / 20 * 100, 100)}%` }}
+                          style={{
+                            width: `${Math.min((h.weight / 20) * 100, 100)}%`,
+                          }}
                         />
                       </div>
                     </div>

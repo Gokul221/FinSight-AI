@@ -1,17 +1,11 @@
 "use client";
 
-import { recentActivity, ActivityItem } from "@/lib/mockData";
-import {
-  ArrowUpDown,
-  Sparkles,
-  Bell,
-  FileText,
-  Clock,
-} from "lucide-react";
+import type { SerializedActivity } from "@/lib/activity";
+import { ArrowUpDown, RefreshCw, FileText, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const typeConfig: Record<
-  ActivityItem["type"],
+  SerializedActivity["type"],
   { icon: React.ReactNode; color: string; bg: string }
 > = {
   trade: {
@@ -19,24 +13,19 @@ const typeConfig: Record<
     color: "text-emerald-400",
     bg: "bg-emerald-400/10",
   },
-  ai: {
-    icon: <Sparkles className="w-3.5 h-3.5" />,
+  price: {
+    icon: <RefreshCw className="w-3.5 h-3.5" />,
     color: "text-indigo-400",
     bg: "bg-indigo-400/10",
   },
-  alert: {
-    icon: <Bell className="w-3.5 h-3.5" />,
+  document: {
+    icon: <FileText className="w-3.5 h-3.5" />,
     color: "text-amber-400",
     bg: "bg-amber-400/10",
   },
-  document: {
-    icon: <FileText className="w-3.5 h-3.5" />,
-    color: "text-slate-400",
-    bg: "bg-slate-400/10",
-  },
 };
 
-export default function RecentActivityFeed() {
+export default function RecentActivityFeed({ activity }: { activity: SerializedActivity[] }) {
   return (
     <div className="glass-card p-5 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
@@ -47,8 +36,13 @@ export default function RecentActivityFeed() {
         </div>
       </div>
 
+      {activity.length === 0 ? (
+        <p className="text-xs text-slate-500 py-8 text-center">
+          No activity yet — add a holding or refresh prices to see it here.
+        </p>
+      ) : (
       <div className="flex-1 space-y-3 overflow-y-auto">
-        {recentActivity.map((item, i) => {
+        {activity.map((item, i) => {
           const config = typeConfig[item.type];
           return (
             <div
@@ -82,6 +76,7 @@ export default function RecentActivityFeed() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

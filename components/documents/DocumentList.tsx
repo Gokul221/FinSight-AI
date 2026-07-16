@@ -1,8 +1,9 @@
 "use client";
 
-import { documents } from "@/lib/mockData";
+import { useState } from "react";
+import type { Document as DocumentType } from "@/lib/mockData";
 import EmbeddingStatusBadge from "./EmbeddingStatusBadge";
-import { FileText, Trash2, MessageSquare, RefreshCw, ExternalLink } from "lucide-react";
+import { FileText, Trash2, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -10,9 +11,37 @@ const typeColors: Record<string, string> = {
   PDF: "text-rose-400 bg-rose-400/10",
   CSV: "text-emerald-400 bg-emerald-400/10",
   XLSX: "text-amber-400 bg-amber-400/10",
+  TXT: "text-slate-400 bg-slate-400/10",
 };
 
-export default function DocumentList() {
+export default function DocumentList({
+  documents,
+  onDeleted,
+}: {
+  documents: DocumentType[];
+  onDeleted: (id: string) => void;
+}) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
+      if (res.ok) onDeleted(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  if (documents.length === 0) {
+    return (
+      <div className="glass-card p-10 text-center">
+        <p className="text-sm text-slate-400">No documents in your knowledge base yet.</p>
+        <p className="text-xs text-slate-600 mt-1">Upload a PDF, CSV, XLSX, or TXT file above to get started.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="glass-card overflow-hidden">
       <div className="px-5 py-4 border-b border-white/[0.06]">
@@ -98,20 +127,12 @@ export default function DocumentList() {
                         </Button>
                       </Link>
                     )}
-                    {doc.status === "failed" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-400/10"
-                      >
-                        <RefreshCw className="w-3 h-3 mr-1" />
-                        Retry
-                      </Button>
-                    )}
                     {doc.status !== "processing" && (
                       <Button
                         variant="ghost"
                         size="sm"
+                        disabled={deletingId === doc.id}
+                        onClick={() => handleDelete(doc.id)}
                         className="h-6 px-2 text-[10px] text-slate-500 hover:text-rose-400 hover:bg-rose-400/10"
                       >
                         <Trash2 className="w-3 h-3" />

@@ -1,17 +1,71 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import DashboardShell from "@/components/layout/DashboardShell";
 import KPICard from "@/components/dashboard/KPICard";
 import PortfolioChart from "@/components/dashboard/PortfolioChart";
 import AIInsightBanner from "@/components/dashboard/AIInsightBanner";
 import MarketMoverCard from "@/components/dashboard/MarketMoverCard";
 import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
-import { kpiData } from "@/lib/mockData";
+import { kpiData, type KPI } from "@/lib/mockData";
 import { useApp } from "@/lib/AppContext";
+import { withComputedFields, portfolioTotals, type RawHolding } from "@/lib/portfolio";
+import type { MarketMoverQuote } from "@/lib/marketData";
+import type { SerializedActivity } from "@/lib/activity";
+
+const todayLabel = new Date().toLocaleDateString("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
 
 export default function DashboardPage() {
   const { user } = useApp();
   const firstName = user?.name.trim().split(/\s+/)[0];
+  const [rawHoldings, setRawHoldings] = useState<RawHolding[] | null>(null);
+  const [movers, setMovers] = useState<MarketMoverQuote[]>([]);
+  const [activity, setActivity] = useState<SerializedActivity[]>([]);
+
+  useEffect(() => {
+    fetch("/api/portfolio")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load portfolio"))))
+      .then((data) => setRawHoldings(data.holdings))
+      .catch(() => setRawHoldings([]));
+
+    fetch("/api/market-movers")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load market movers"))))
+      .then((data) => setMovers(data.movers))
+      .catch(() => setMovers([]));
+
+    fetch("/api/activity")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load activity"))))
+      .then((data) => setActivity(data.activity))
+      .catch(() => setActivity([]));
+  }, []);
+
+  const holdings = withComputedFields(rawHoldings ?? []);
+  const { totalValue, totalPnL, totalPnLPercent } = portfolioTotals(holdings);
+  const pnlPositive = totalPnL >= 0;
+  const pnlDeltaType = totalPnL === 0 ? "neutral" : pnlPositive ? "positive" : "negative";
+
+  const portfolioKpis: KPI[] = [
+    {
+      label: "Total Portfolio Value",
+      value: `₹${totalValue.toLocaleString("en-IN")}`,
+      delta: `${pnlPositive ? "+" : ""}₹${Math.abs(totalPnL).toLocaleString("en-IN")} (${pnlPositive ? "+" : ""}${totalPnLPercent.toFixed(2)}%)`,
+      deltaType: pnlDeltaType,
+      subtext: "vs cost basis",
+      icon: "TrendingUp",
+    },
+    {
+      label: "Total P&L",
+      value: `${pnlPositive ? "+" : ""}₹${Math.abs(totalPnL).toLocaleString("en-IN")}`,
+      delta: `${pnlPositive ? "+" : ""}${totalPnLPercent.toFixed(2)}%`,
+      deltaType: pnlDeltaType,
+      subtext: "unrealized",
+      icon: "BarChart3",
+    },
+  ];
 
   return (
     <DashboardShell>
@@ -22,13 +76,13 @@ export default function DashboardPage() {
             Good morning{firstName ? `, ${firstName}` : ""} 👋
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Here&apos;s your portfolio snapshot for today — 27 Jan 2025
+            Here&apos;s your portfolio snapshot for today — {todayLabel}
           </p>
         </div>
 
         {/* Row 1: KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {kpiData.map((kpi, i) => (
+          {[...portfolioKpis, ...kpiData].map((kpi, i) => (
             <KPICard key={kpi.label} kpi={kpi} index={i} />
           ))}
         </div>
@@ -45,8 +99,8 @@ export default function DashboardPage() {
 
         {/* Row 3: Market Movers + Activity */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <MarketMoverCard />
-          <RecentActivityFeed />
+          <MarketMoverCard movers={movers} />
+          <RecentActivityFeed activity={activity} />
         </div>
       </div>
     </DashboardShell>

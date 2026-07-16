@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { chatHistory, ChatMessage as ChatMessageType, sourceCitations } from "@/lib/mockData";
+import { useRef, useEffect, useState } from "react";
+import { ChatMessage as ChatMessageType } from "@/lib/mockData";
 import ChatMessage from "./ChatMessage";
 import { Send, Paperclip, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,17 @@ function ThinkingIndicator() {
   );
 }
 
-export default function ChatPanel() {
-  const [messages, setMessages] = useState<ChatMessageType[]>(chatHistory);
+export default function ChatPanel({
+  messages,
+  thinking,
+  onSend,
+}: {
+  messages: ChatMessageType[];
+  thinking: boolean;
+  onSend: (text: string) => void;
+}) {
   const [input, setInput] = useState("");
-  const [thinking, setThinking] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,37 +44,8 @@ export default function ChatPanel() {
   const sendMessage = (text?: string) => {
     const content = text ?? input.trim();
     if (!content || thinking) return;
-
-    const userMsg: ChatMessageType = {
-      id: Date.now().toString(),
-      role: "user",
-      content,
-      timestamp: new Date().toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+    onSend(content);
     setInput("");
-    setThinking(true);
-
-    // Simulate AI response after delay
-    setTimeout(() => {
-      const aiMsg: ChatMessageType = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content:
-          "Based on your portfolio data and the documents in your knowledge base, I've analysed your query. Your current holdings show a diversified mix across IT, Banking, and Energy sectors. For more specific analysis, consider uploading the latest earnings reports to get RAG-powered insights.\n\nKey observation: Your IT sector allocation at **35%** is above the recommended 30% ceiling. Consider rebalancing by trimming positions in TCS or INFY.",
-        timestamp: new Date().toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        sources: [sourceCitations[0], sourceCitations[1]],
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      setThinking(false);
-    }, 1800);
   };
 
   const sendMessageRef = useRef(sendMessage);
@@ -119,6 +95,11 @@ export default function ChatPanel() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-5">
+        {messages.length === 0 && !thinking && (
+          <p className="text-xs text-slate-500 text-center mt-10">
+            Ask about your portfolio, or upload a document and ask about it.
+          </p>
+        )}
         {messages.map((msg) => (
           <ChatMessage key={msg.id} message={msg} />
         ))}
@@ -130,7 +111,6 @@ export default function ChatPanel() {
       <div className="flex-shrink-0 px-5 py-4 border-t border-white/[0.06]">
         <div className="glass-card-2 p-3 flex flex-col gap-2">
           <textarea
-            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

@@ -1,6 +1,6 @@
 "use client";
 
-import { marketMovers } from "@/lib/mockData";
+import type { MarketMoverQuote } from "@/lib/marketData";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +42,7 @@ function Sparkline({
   );
 }
 
-export default function MarketMoverCard() {
+export default function MarketMoverCard({ movers }: { movers: MarketMoverQuote[] }) {
   return (
     <div className="glass-card p-5 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
@@ -52,6 +52,11 @@ export default function MarketMoverCard() {
         </span>
       </div>
 
+      {movers.length === 0 ? (
+        <p className="text-xs text-slate-500 py-8 text-center">
+          Live market data is unavailable right now.
+        </p>
+      ) : (
       <div className="flex-1 overflow-hidden">
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-0 items-center text-[10px] text-slate-500 uppercase tracking-wider px-1 mb-2">
           <span>Stock</span>
@@ -61,7 +66,7 @@ export default function MarketMoverCard() {
         </div>
 
         <div className="space-y-0.5">
-          {marketMovers.map((stock) => {
+          {movers.map((stock) => {
             const positive = stock.changePercent > 0;
             return (
               <div
@@ -105,13 +110,18 @@ export default function MarketMoverCard() {
 
                 {/* Sparkline */}
                 <div className="flex justify-end">
-                  <Sparkline data={stock.sparkline} positive={positive} />
+                  {stock.sparkline.length > 1 ? (
+                    <Sparkline data={stock.sparkline} positive={positive} />
+                  ) : (
+                    <span className="text-[10px] text-slate-600">—</span>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+      )}
     </div>
   );
 }
