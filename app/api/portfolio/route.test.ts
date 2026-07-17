@@ -17,9 +17,14 @@ vi.mock("@/lib/activity", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/portfolioSnapshot", () => ({
+  ensureTodaySnapshot: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { signAuthToken } from "@/lib/auth";
 import { Holding } from "@/models/Holding";
 import { logActivity } from "@/lib/activity";
+import { ensureTodaySnapshot } from "@/lib/portfolioSnapshot";
 import { GET, POST } from "./route";
 
 function makeRequest(body: unknown) {
@@ -85,6 +90,46 @@ describe("GET /api/portfolio", () => {
         sector: "IT",
       },
     ]);
+  });
+
+  it("includes a computed risk score alongside the holdings", async () => {
+    authedCookie("user-1");
+    (Holding.find as any).mockResolvedValue([
+      {
+        _id: { toString: () => "h1" },
+        name: "Tata Consultancy Services",
+        ticker: "TCS",
+        quantity: 10,
+        avgBuyPrice: 3000,
+        currentPrice: 3200,
+        sector: "IT",
+      },
+    ]);
+
+    const res = await GET();
+    const json = await res.json();
+
+    expect(json.riskScore).toEqual({ score: 10, level: "High", topSector: "IT", topSectorPercent: 100 });
+  });
+
+  it("records today's snapshot but still returns a 200 if snapshotting fails", async () => {
+    authedCookie("user-1");
+    (Holding.find as any).mockResolvedValue([]);
+    (ensureTodaySnapshot as any).mockRejectedValueOnce(new Error("db unavailable"));
+
+    const res = await GET();
+    expect(res.status).toBe(200);
+    expect(ensureTodaySnapshot).toHaveBeenCalledWith("user-1", 0);
+  });
+
+  it("returns a zeroed, low-risk score for a user with no holdings", async () => {
+    authedCookie("user-1");
+    (Holding.find as any).mockResolvedValue([]);
+
+    const res = await GET();
+    const json = await res.json();
+
+    expect(json.riskScore).toEqual({ score: 0, level: "Low", topSector: null, topSectorPercent: 0 });
   });
 });
 

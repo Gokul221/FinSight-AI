@@ -10,10 +10,16 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { portfolioChartData } from "@/lib/mockData";
+import type { PortfolioHistoryPoint } from "@/lib/portfolioSnapshot";
 
 const formatINR = (value: number) =>
   `₹${(value / 100000).toFixed(1)}L`;
+
+const formatDateTick = (date: string) => {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+};
 
 const CustomTooltip = ({
   active,
@@ -21,13 +27,13 @@ const CustomTooltip = ({
   label,
 }: {
   active?: boolean;
-  payload?: { value: number; color: string; name: string }[];
+  payload?: { value: number | null; color: string; name: string }[];
   label?: string;
 }) => {
   if (active && payload && payload.length) {
     return (
       <div className="glass-card p-3 text-xs">
-        <p className="text-slate-400 mb-2 font-medium">{label}</p>
+        <p className="text-slate-400 mb-2 font-medium">{label ? formatDateTick(label) : ""}</p>
         {payload.map((entry, i) => (
           <div key={i} className="flex items-center gap-2 mb-1">
             <span
@@ -36,7 +42,7 @@ const CustomTooltip = ({
             />
             <span className="text-slate-300">{entry.name}:</span>
             <span className="font-num font-bold text-white">
-              {formatINR(entry.value)}
+              {typeof entry.value === "number" ? formatINR(entry.value) : "—"}
             </span>
           </div>
         ))}
@@ -46,7 +52,7 @@ const CustomTooltip = ({
   return null;
 };
 
-export default function PortfolioChart() {
+export default function PortfolioChart({ points }: { points: PortfolioHistoryPoint[] }) {
   return (
     <div className="glass-card p-5 h-full">
       <div className="flex items-center justify-between mb-5">
@@ -55,7 +61,7 @@ export default function PortfolioChart() {
             Portfolio Performance
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            6-month value history vs Nifty 50
+            Value history vs Nifty 50
           </p>
         </div>
         <div className="flex items-center gap-4 text-xs">
@@ -70,9 +76,14 @@ export default function PortfolioChart() {
         </div>
       </div>
 
+      {points.length === 0 ? (
+        <p className="text-xs text-slate-500 py-8 text-center">
+          No portfolio history yet — check back tomorrow to start seeing your value trend.
+        </p>
+      ) : (
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart
-          data={portfolioChartData}
+          data={points}
           margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
         >
           <defs>
@@ -92,6 +103,7 @@ export default function PortfolioChart() {
           />
           <XAxis
             dataKey="date"
+            tickFormatter={formatDateTick}
             tick={{ fill: "#64748B", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
@@ -124,9 +136,11 @@ export default function PortfolioChart() {
             dot={false}
             activeDot={{ r: 4, fill: "#64748B", stroke: "#fff", strokeWidth: 2 }}
             strokeDasharray="4 2"
+            connectNulls
           />
         </AreaChart>
       </ResponsiveContainer>
+      )}
     </div>
   );
 }

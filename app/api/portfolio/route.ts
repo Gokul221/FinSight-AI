@@ -1,7 +1,9 @@
 import { connectToDatabase } from "@/lib/db/connect";
 import { Holding, type HoldingDocument } from "@/models/Holding";
 import { isPositiveNumber } from "@/lib/validation";
-import { serializeHolding, resolveSectorName } from "@/lib/portfolio";
+import { serializeHolding, resolveSectorName, withComputedFields, portfolioTotals } from "@/lib/portfolio";
+import { computeRiskScore } from "@/lib/riskScore";
+import { ensureTodaySnapshot } from "@/lib/portfolioSnapshot";
 import { getAuthenticatedUserId } from "@/lib/session";
 import { logActivity } from "@/lib/activity";
 
@@ -13,8 +15,22 @@ export async function GET() {
 
   await connectToDatabase();
   const holdings = (await Holding.find({ userId })) as HoldingDocument[];
+  const rawHoldings = holdings.map(serializeHolding);
+  const computedHoldings = withComputedFields(rawHoldings);
+  const riskScore = computeRiskScore(computedHoldings);
 
-  return Response.json({ holdings: holdings.map(serializeHolding) });
+  // Snapshotting today's value (for the performance chart's history) is a
+  // side effect of viewing the portfolio, not core to this response — a
+  // failure here (e.g. the Nifty fetch or a DB hiccup) must never break the
+  // main portfolio payload.
+  try {
+    const { totalValue } = portfolioTotals(computedHoldings);
+    await ensureTodaySnapshot(userId, totalValue);
+  } catch (error) {
+    console.warn("Failed to record today's portfolio snapshot:", error);
+  }
+
+  return Response.json({ holdings: rawHoldings, riskScore });
 }
 
 export async function POST(request: Request) {

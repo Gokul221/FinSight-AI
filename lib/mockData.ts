@@ -72,30 +72,13 @@ export interface PerformancePoint {
   niftyNext50: number;
 }
 
-// ─── KPI Data ──────────────────────────────────────────────────────────────
-// "Total Portfolio Value" and "Today's P&L" are computed from real holdings
-// on the dashboard page instead of hardcoded here — Risk Score and AI
-// Insights have no real backing logic yet, so they stay mock for now.
-export const kpiData: KPI[] = [
-  {
-    label: "Risk Score",
-    value: "6.4 / 10",
-    delta: "Moderate",
-    deltaType: "neutral",
-    subtext: "Updated today",
-    icon: "Shield",
-  },
-  {
-    label: "AI Insights",
-    value: "12 new",
-    delta: "Generated today",
-    deltaType: "neutral",
-    subtext: "3 require action",
-    icon: "Sparkles",
-  },
-];
-
 // ─── Performance History ────────────────────────────────────────────────────
+// Still mock — this backs the "Monthly Returns" bar chart in
+// components/portfolio/PerformanceChart.tsx (portfolio vs Nifty 50 vs Nifty
+// Next 50 monthly % returns), a separate feature from the dashboard's value
+// history chart. Migrating it needs its own data source decision (e.g.
+// monthly-aggregated snapshots plus a Nifty Next 50 index feed) — flagged
+// for follow-up rather than migrated here.
 export const performanceHistory: PerformancePoint[] = [
   { month: "Aug", portfolio: 2.1, nifty50: 1.4, niftyNext50: 1.8 },
   { month: "Sep", portfolio: -0.8, nifty50: -1.2, niftyNext50: -0.5 },
@@ -104,18 +87,6 @@ export const performanceHistory: PerformancePoint[] = [
   { month: "Dec", portfolio: 1.8, nifty50: 0.9, niftyNext50: 1.4 },
   { month: "Jan", portfolio: 4.6, nifty50: 2.7, niftyNext50: 3.2 },
 ];
-
-// ─── Portfolio Chart (6-month value history) ─────────────────────────────────
-export const portfolioChartData = [
-  { date: "Aug 24", portfolio: 2245000, nifty: 2210000 },
-  { date: "Sep 24", portfolio: 2187000, nifty: 2185000 },
-  { date: "Oct 24", portfolio: 2362000, nifty: 2231000 },
-  { date: "Nov 24", portfolio: 2485000, nifty: 2316000 },
-  { date: "Dec 24", portfolio: 2529000, nifty: 2337000 },
-  { date: "Jan 25", portfolio: 2643750, nifty: 2401000 },
-];
-
-
 
 // ─── Alerts ────────────────────────────────────────────────────────────────
 export const alerts: Alert[] = [
@@ -160,23 +131,4 @@ export const suggestedQuestions = [
   "Compare INFY vs TCS over the last year",
   "Which stocks in my portfolio beat Nifty this month?",
   "What is the dividend yield of my banking stocks?",
-];
-
-// ─── AI Insights ────────────────────────────────────────────────────────────
-export const aiInsights = [
-  {
-    id: "1",
-    text: "Your HDFC Bank allocation has grown to 18% — consider rebalancing to maintain sector limits.",
-    severity: "warning",
-  },
-  {
-    id: "2",
-    text: "TCS showing bullish momentum over the last 5 sessions — RSI at 62, approaching overbought zone.",
-    severity: "info",
-  },
-  {
-    id: "3",
-    text: "3 of your watchlist stocks report earnings this week: WIPRO (Wed), INFY (Thu), RELIANCE (Fri).",
-    severity: "alert",
-  },
 ];

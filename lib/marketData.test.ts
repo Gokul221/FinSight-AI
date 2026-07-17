@@ -7,7 +7,7 @@ vi.mock("yahoo-finance2", () => ({
   }),
 }));
 
-import { getNseMarketMovers, getNseQuotes } from "./marketData";
+import { getNiftyIndexValue, getNseMarketMovers, getNseQuotes } from "./marketData";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -118,5 +118,30 @@ describe("getNseMarketMovers", () => {
 
     const result = await getNseMarketMovers(["TCS"]);
     expect(result).toEqual([]);
+  });
+});
+
+describe("getNiftyIndexValue", () => {
+  it("fetches the ^NSEI index quote and returns its regular market price", async () => {
+    mockQuote.mockResolvedValue({ regularMarketPrice: 24350.5 });
+
+    const result = await getNiftyIndexValue();
+
+    expect(mockQuote).toHaveBeenCalledWith("^NSEI");
+    expect(result).toBe(24350.5);
+  });
+
+  it("returns null when the quote has no resolvable price", async () => {
+    mockQuote.mockResolvedValue({});
+
+    const result = await getNiftyIndexValue();
+    expect(result).toBeNull();
+  });
+
+  it("returns null (rather than throwing) when the request fails", async () => {
+    mockQuote.mockRejectedValue(new Error("network error"));
+
+    const result = await getNiftyIndexValue();
+    expect(result).toBeNull();
   });
 });

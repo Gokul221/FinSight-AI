@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { aiInsights } from "@/lib/mockData";
-import { Sparkles, ArrowRight, AlertTriangle, Info, Bell } from "lucide-react";
+import type { SerializedInsight } from "@/lib/insights";
+import { Sparkles, ArrowRight, AlertTriangle, Info, Bell, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const severityConfig = {
@@ -20,7 +21,28 @@ const severityConfig = {
   },
 };
 
-export default function AIInsightBanner() {
+export default function AIInsightBanner({
+  insights,
+  onRefresh,
+}: {
+  insights: SerializedInsight[];
+  onRefresh: () => Promise<void>;
+}) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setRefreshError(null);
+    try {
+      await onRefresh();
+    } catch {
+      setRefreshError("Couldn't generate new insights. Please try again.");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <div className="glass-card h-full flex flex-col border-l-2 border-indigo-500">
       <div className="p-5 border-b border-white/[0.06]">
@@ -30,17 +52,35 @@ export default function AIInsightBanner() {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-200">AI Insights</h3>
-            <p className="text-[11px] text-slate-500">Generated today</p>
+            <p className="text-[11px] text-slate-500">Generated for your portfolio</p>
           </div>
           <span className="ml-auto text-[10px] badge-indigo px-2 py-0.5 rounded-full font-medium">
-            {aiInsights.length} new
+            {insights.length} new
           </span>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Refresh insights"
+            className="text-slate-500 hover:text-indigo-400 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", refreshing && "animate-spin")} />
+          </button>
         </div>
       </div>
 
+      {refreshError && (
+        <p className="px-4 pt-3 text-[11px] text-rose-400">{refreshError}</p>
+      )}
+
       <div className="flex-1 overflow-y-auto">
-        {aiInsights.map((insight, i) => {
-          const config = severityConfig[insight.severity as keyof typeof severityConfig];
+        {insights.length === 0 ? (
+          <p className="text-xs text-slate-500 py-8 text-center px-4">
+            No insights yet — add holdings or refresh to generate AI insights for your portfolio.
+          </p>
+        ) : (
+        insights.map((insight) => {
+          const config = severityConfig[insight.severity];
           return (
             <div
               key={insight.id}
@@ -66,7 +106,8 @@ export default function AIInsightBanner() {
               </div>
             </div>
           );
-        })}
+        })
+        )}
       </div>
 
       <div className="p-3 border-t border-white/[0.06]">

@@ -45,6 +45,20 @@ export async function getNseQuotes(tickers: string[]): Promise<Map<string, numbe
   return prices;
 }
 
+// The Nifty 50 benchmark index (^NSEI on Yahoo Finance). Used as the market
+// comparison line on the portfolio performance chart. Returns null (rather
+// than throwing) on failure so callers can treat "no benchmark today" as a
+// normal, non-fatal case.
+export async function getNiftyIndexValue(): Promise<number | null> {
+  try {
+    const quote = await yahooFinance.quote("^NSEI");
+    return typeof quote?.regularMarketPrice === "number" ? quote.regularMarketPrice : null;
+  } catch (error) {
+    console.warn(`Failed to fetch Nifty index value: ${error}`);
+    return null;
+  }
+}
+
 export interface MarketMoverQuote {
   ticker: string;
   name: string;
