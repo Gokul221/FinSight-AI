@@ -59,16 +59,6 @@ export interface Alert {
   read: boolean;
 }
 
-export interface WatchlistStock {
-  id: string;
-  ticker: string;
-  name: string;
-  targetPrice: number;
-  currentPrice: number;
-  alertType: string;
-  status: "active" | "triggered";
-}
-
 export interface AllocationData {
   name: string;
   value: number;
@@ -163,46 +153,6 @@ export const alerts: Alert[] = [
   },
 ];
 
-// ─── Watchlist ──────────────────────────────────────────────────────────────
-export const watchlistStocks: WatchlistStock[] = [
-  {
-    id: "1",
-    ticker: "RELIANCE",
-    name: "Reliance Industries",
-    targetPrice: 2800,
-    currentPrice: 2763,
-    alertType: "Price Target",
-    status: "active",
-  },
-  {
-    id: "2",
-    ticker: "INFY",
-    name: "Infosys",
-    targetPrice: 1600,
-    currentPrice: 1648,
-    alertType: "+3% above target",
-    status: "triggered",
-  },
-  {
-    id: "3",
-    ticker: "WIPRO",
-    name: "Wipro",
-    targetPrice: 480,
-    currentPrice: 471,
-    alertType: "Earnings Alert",
-    status: "active",
-  },
-  {
-    id: "4",
-    ticker: "BAJFINANCE",
-    name: "Bajaj Finance",
-    targetPrice: 8000,
-    currentPrice: 7580,
-    alertType: "Price Target",
-    status: "active",
-  },
-];
-
 // ─── Suggested Questions ────────────────────────────────────────────────────
 export const suggestedQuestions = [
   "Summarise Q3 earnings for my holdings",
@@ -230,4 +180,3 @@ export const aiInsights = [
     severity: "alert",
   },
 ];
-
