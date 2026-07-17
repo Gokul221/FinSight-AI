@@ -69,3 +69,64 @@ export function buildPortfolioHistoryPoints(snapshots: RawSnapshot[]): Portfolio
     };
   });
 }
+
+export interface MonthlyReturnPoint {
+  month: string;
+  portfolioReturn: number;
+  niftyReturn: number | null;
+}
+
+const MONTH_LABELS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+function monthLabelFromDate(date: string): string {
+  const monthIndex = Number(date.slice(5, 7)) - 1;
+  return MONTH_LABELS[monthIndex] ?? date.slice(5, 7);
+}
+
+// Aggregates daily snapshots into monthly % returns for the "Monthly Returns"
+// bar chart. For each calendar month, the last snapshot dated within that
+// month stands in for the month's closing value (there's no guarantee every
+// day has a snapshot — this just picks the one closest to month-end among
+// what actually exists). Each populated month's return is computed against
+// the prior populated month's close, so the first populated month never
+// appears in the output (there's nothing to compare it to). Nifty's return is
+// left null for a given month if either endpoint snapshot is missing a
+// niftyValue. Result is capped to the most recent 6 populated months.
+export function computeMonthlyReturns(snapshots: RawSnapshot[]): MonthlyReturnPoint[] {
+  if (snapshots.length === 0) return [];
+
+  const sorted = [...snapshots].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
+  // Overwriting as we walk ascending order leaves each month key pointing at
+  // its latest (closest-to-month-end) snapshot.
+  const monthlyClose = new Map<string, RawSnapshot>();
+  for (const s of sorted) {
+    monthlyClose.set(s.date.slice(0, 7), s);
+  }
+
+  const months = [...monthlyClose.keys()].sort();
+  const points: MonthlyReturnPoint[] = [];
+
+  for (let i = 1; i < months.length; i++) {
+    const prev = monthlyClose.get(months[i - 1])!;
+    const curr = monthlyClose.get(months[i])!;
+
+    const portfolioReturn =
+      prev.portfolioValue !== 0 ? ((curr.portfolioValue - prev.portfolioValue) / prev.portfolioValue) * 100 : 0;
+
+    const niftyReturn =
+      typeof prev.niftyValue === "number" && typeof curr.niftyValue === "number" && prev.niftyValue !== 0
+        ? ((curr.niftyValue - prev.niftyValue) / prev.niftyValue) * 100
+        : null;
+
+    points.push({
+      month: monthLabelFromDate(curr.date),
+      portfolioReturn,
+      niftyReturn,
+    });
+  }
+
+  return points.slice(-6);
+}

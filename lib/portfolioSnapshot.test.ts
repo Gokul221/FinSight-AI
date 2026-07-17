@@ -16,6 +16,7 @@ import { PortfolioSnapshot } from "@/models/PortfolioSnapshot";
 import { getNiftyIndexValue } from "@/lib/marketData";
 import {
   buildPortfolioHistoryPoints,
+  computeMonthlyReturns,
   ensureTodaySnapshot,
   todayUtcDateString,
 } from "./portfolioSnapshot";
@@ -101,5 +102,56 @@ describe("buildPortfolioHistoryPoints", () => {
     ]);
 
     expect(points.every((p) => p.nifty === null)).toBe(true);
+  });
+});
+
+describe("computeMonthlyReturns", () => {
+  it("returns an empty array for no snapshots", () => {
+    expect(computeMonthlyReturns([])).toEqual([]);
+  });
+
+  it("returns an empty array for a single snapshot, since there's no prior month to anchor a return to", () => {
+    const points = computeMonthlyReturns([{ date: "2026-07-17", portfolioValue: 250000, niftyValue: 24350 }]);
+    expect(points).toEqual([]);
+  });
+
+  it("computes month-over-month % returns using the last snapshot within each calendar month", () => {
+    const points = computeMonthlyReturns([
+      { date: "2026-05-10", portfolioValue: 190000, niftyValue: 23800 },
+      { date: "2026-05-31", portfolioValue: 200000, niftyValue: 24000 },
+      { date: "2026-06-30", portfolioValue: 220000, niftyValue: 24480 },
+      { date: "2026-07-17", portfolioValue: 209000, niftyValue: 23990 },
+    ]);
+
+    expect(points).toEqual([
+      { month: "Jun", portfolioReturn: 10, niftyReturn: 2 },
+      { month: "Jul", portfolioReturn: -5, niftyReturn: expect.closeTo(-2.0016339869281046, 5) },
+    ]);
+  });
+
+  it("nulls out a month's nifty return when either endpoint snapshot is missing a nifty value", () => {
+    const points = computeMonthlyReturns([
+      { date: "2026-05-31", portfolioValue: 200000, niftyValue: 24000 },
+      { date: "2026-06-30", portfolioValue: 220000, niftyValue: null },
+      { date: "2026-07-31", portfolioValue: 210000, niftyValue: 24480 },
+    ]);
+
+    expect(points).toEqual([
+      { month: "Jun", portfolioReturn: 10, niftyReturn: null },
+      { month: "Jul", portfolioReturn: expect.closeTo(-4.5454545, 5), niftyReturn: null },
+    ]);
+  });
+
+  it("caps the output at the most recent 6 populated months", () => {
+    const snapshots = Array.from({ length: 8 }, (_, i) => ({
+      date: `2026-${String(i + 1).padStart(2, "0")}-28`,
+      portfolioValue: 100000 + i * 1000,
+      niftyValue: 24000 + i * 10,
+    }));
+
+    const points = computeMonthlyReturns(snapshots);
+
+    expect(points).toHaveLength(6);
+    expect(points.map((p) => p.month)).toEqual(["Mar", "Apr", "May", "Jun", "Jul", "Aug"]);
   });
 });

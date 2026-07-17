@@ -65,29 +65,6 @@ export interface AllocationData {
   color: string;
 }
 
-export interface PerformancePoint {
-  month: string;
-  portfolio: number;
-  nifty50: number;
-  niftyNext50: number;
-}
-
-// ─── Performance History ────────────────────────────────────────────────────
-// Still mock — this backs the "Monthly Returns" bar chart in
-// components/portfolio/PerformanceChart.tsx (portfolio vs Nifty 50 vs Nifty
-// Next 50 monthly % returns), a separate feature from the dashboard's value
-// history chart. Migrating it needs its own data source decision (e.g.
-// monthly-aggregated snapshots plus a Nifty Next 50 index feed) — flagged
-// for follow-up rather than migrated here.
-export const performanceHistory: PerformancePoint[] = [
-  { month: "Aug", portfolio: 2.1, nifty50: 1.4, niftyNext50: 1.8 },
-  { month: "Sep", portfolio: -0.8, nifty50: -1.2, niftyNext50: -0.5 },
-  { month: "Oct", portfolio: 3.4, nifty50: 2.1, niftyNext50: 2.8 },
-  { month: "Nov", portfolio: 5.2, nifty50: 3.8, niftyNext50: 4.1 },
-  { month: "Dec", portfolio: 1.8, nifty50: 0.9, niftyNext50: 1.4 },
-  { month: "Jan", portfolio: 4.6, nifty50: 2.7, niftyNext50: 3.2 },
-];
-
 // ─── Alerts ────────────────────────────────────────────────────────────────
 export const alerts: Alert[] = [
   {

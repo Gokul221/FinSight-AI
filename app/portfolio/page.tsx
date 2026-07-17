@@ -9,6 +9,7 @@ import AddHoldingDialog from "@/components/portfolio/AddHoldingDialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { withComputedFields, portfolioTotals, type RawHolding } from "@/lib/portfolio";
+import type { MonthlyReturnPoint } from "@/lib/portfolioSnapshot";
 import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 
 export default function PortfolioPage() {
@@ -16,12 +17,18 @@ export default function PortfolioPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [monthlyReturns, setMonthlyReturns] = useState<MonthlyReturnPoint[]>([]);
 
   useEffect(() => {
     fetch("/api/portfolio")
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load portfolio"))))
       .then((data) => setRawHoldings(data.holdings))
       .catch(() => setError("Couldn't load your portfolio. Please refresh the page."));
+
+    fetch("/api/portfolio/monthly-returns")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load monthly returns"))))
+      .then((data) => setMonthlyReturns(data.points))
+      .catch(() => setMonthlyReturns([]));
   }, []);
 
   const refreshPrices = async () => {
@@ -131,7 +138,7 @@ export default function PortfolioPage() {
             {/* Right: Donut + Performance */}
             <div className="xl:col-span-5 space-y-4">
               <AllocationDonut holdings={holdings} />
-              <PerformanceChart />
+              <PerformanceChart points={monthlyReturns} />
             </div>
           </div>
         )}
